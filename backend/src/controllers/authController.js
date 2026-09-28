@@ -88,7 +88,7 @@ export const login = async (req, res) => {
     //Create token
     const token = jwt.sign(
       {
-        userId: user._id,
+        userId: user.id,
         role: user.role,
       },
       process.env.JWT_SECRET,
@@ -117,6 +117,60 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login Error:", error);
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.error("Get current user error:", error);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({
+      message: "Logout successful",
+    });
+  } catch (error) {
+    console.error("Logout error", error);
+
     return res.status(500).json({
       message: "Server error",
     });
