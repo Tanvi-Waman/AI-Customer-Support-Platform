@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
 }
 
 datasource db {
@@ -8,16 +9,55 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String   
   email     String   @unique
-  password  String
+  password  String   
   role      Role     @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  ticketsCreated Ticket[] @relation("CustomerTickets")
+  ticketsAssigned Ticket[] @relation("AgentTickets")
+}
+
+model Ticket{
+  id Int @id @default(autoincrement())
+  title String 
+  description String
+  status TicketStatus @default(OPEN)
+  priority TicketPriority @default(MEDIUM)
+
+  customerId Int
+  assignedAgentId Int?
+
+  customer User @relation("CustomerTickets",fields:[customerId],references: [id])
+  assignedAgent User? @relation("AgentTickets",fields: [assignedAgentId],references:[id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([assignedAgentId])
+  @@index([status])
+  @@index([priority])
 }
 
 enum Role {
   CUSTOMER
   AGENT
   ADMIN
+}
+
+enum TicketStatus{
+  OPEN 
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority{
+  LOW 
+  MEDIUM
+  HIGH
+  URGENT
 }
